@@ -155,6 +155,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import RandomizedSearchCV
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 import numpy as np
+from imblearn.over_sampling import SMOTE
 
 # Define a reduced parameter grid for RandomizedSearchCV
 param_grid = {
@@ -165,16 +166,19 @@ param_grid = {
     'class_weight': ['balanced', None]
 }
 
-# Initialize Random Forest Classifier
-rf_clf = RandomForestClassifier()
+smote = SMOTE(random_state=42)
+X_train_resampled, y_train_resampled = smote.fit_resample(X_train, y_train)
 
-# Hyperparameter tuning with RandomizedSearchCV (100 iterations)
-random_search = RandomizedSearchCV(rf_clf, param_grid, cv=5, scoring='f1', n_iter=20, random_state=42)
-random_search.fit(X_train_scaled, y_train)
+# Proceed to scale X_train_resampled instead
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train_resampled)
+
+# Now, use X_train_scaled and y_train_resampled in RandomizedSearchCV
+random_search.fit(X_train_scaled, y_train_resampled)
 
 # Best hyperparameters
 best_rf_clf = random_search.best_estimator_
-print("Best Hyperparameters:", random_search.best_params_)
+
 
 # Make predictions on the test set
 y_pred = best_rf_clf.predict(X_test_scaled)
